@@ -29,14 +29,28 @@ app.use(cors({
 app.use(express.json({limit:"50mb"}))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
-// Initialize database connection
-connectDb().catch(console.error);
+// Initialize database connection and setup routes
+const initializeApp = async () => {
+    try {
+        // Wait for database connection
+        await connectDb();
+        
+        // Setup routes after database is connected
+        app.use(fileUpload())
+        app.use("/api",MangoRoutes)
+        app.use("/api",ContactRoutes)
+        app.use("/api",LoginRoutes)
+        app.use("/api",OrderRoutes)
+        
+        console.log("App initialized successfully");
+    } catch (error) {
+        console.error("Failed to initialize app:", error);
+        process.exit(1);
+    }
+};
 
-app.use(fileUpload())
-app.use("/api",MangoRoutes)
-app.use("/api",ContactRoutes)
-app.use("/api",LoginRoutes)
-app.use("/api",OrderRoutes)
+// Initialize the app
+initializeApp();
 
 
 app.get("/",(req,res)=>{
@@ -55,9 +69,24 @@ app.get("/health", async (req, res) => {
             3: "disconnecting"
         };
         
+        // Test database connection
+        let dbTest = "unknown";
+        if (dbState === 1) {
+            try {
+                await mongoose.connection.db.admin().ping();
+                dbTest = "responsive";
+            } catch (pingError) {
+                dbTest = "unresponsive";
+            }
+        }
+        
         res.json({
             status: "ok",
-            database: dbStatus[dbState] || "unknown",
+            database: {
+                state: dbStatus[dbState] || "unknown",
+                test: dbTest,
+                readyState: dbState
+            },
             timestamp: new Date().toISOString()
         });
     } catch (error) {

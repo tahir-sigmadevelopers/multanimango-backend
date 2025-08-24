@@ -13,12 +13,12 @@ const connectDb = async () => {
     try {
         const mongoURI = "mongodb://tahirsultan:_isHacked1@cluster0-shard-00-00.z2sch.mongodb.net:27017,cluster0-shard-00-01.z2sch.mongodb.net:27017,cluster0-shard-00-02.z2sch.mongodb.net:27017/MultaniMango?ssl=true&replicaSet=atlas-ranagn-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster0";
         
-        const options = {
+                const options = {
             maxPoolSize: 10, // Maintain up to 10 socket connections
             serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
             socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
             bufferMaxEntries: 0, // Disable mongoose buffering
-            bufferCommands: false, // Disable mongoose buffering
+            bufferCommands: true, // Enable buffering to prevent this error
             useNewUrlParser: true,
             useUnifiedTopology: true,
             // Additional options for serverless
@@ -63,6 +63,13 @@ export const withDb = async (operation) => {
             await connectDb();
         }
         
+        // Wait for connection to be ready
+        if (mongoose.connection.readyState !== 1) {
+            await new Promise((resolve) => {
+                mongoose.connection.once('connected', resolve);
+            });
+        }
+        
         // Execute the operation
         return await operation();
     } catch (error) {
@@ -77,6 +84,23 @@ export const withDb = async (operation) => {
         
         throw error;
     }
+};
+
+// Function to check if database is ready
+export const isDbReady = () => {
+    return mongoose.connection.readyState === 1;
+};
+
+// Function to wait for database to be ready
+export const waitForDb = async () => {
+    if (mongoose.connection.readyState === 1) {
+        return true;
+    }
+    
+    return new Promise((resolve) => {
+        mongoose.connection.once('connected', () => resolve(true));
+        mongoose.connection.once('error', () => resolve(false));
+    });
 };
 
 export default connectDb;
