@@ -22,7 +22,7 @@ cloudinary.config({
 dotenv.config()
 
 app.use(cors({
-    origin:["http://localhost:5174","http://localhost:5173", "https://multanimango.vercel.app/"]
+    origin:["http://localhost:5174","http://localhost:5173", "https://multanimango.vercel.app"]
 }))
 
 app.use(express.json({limit:"50mb"}))
