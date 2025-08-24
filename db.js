@@ -54,6 +54,7 @@ const connectDb = async () => {
     }
 };
 
+// hi
 // Helper function to ensure database operations are properly handled
 export const withDb = async (operation) => {
     try {
