@@ -11,5 +11,10 @@
       "src": "/(.*)",
       "dest": "/Sever.js"
     }
-  ]
+  ],
+  "functions": {
+    "Sever.js": {
+      "maxDuration": 30
+    }
+  }
 }

@@ -6,6 +6,7 @@ import dotenv from 'dotenv'
 import ContactRoutes from "./ContactUs.jsx/Routes.js"
 import LoginRoutes from "./Login/Routes.js"
 import OrderRoutes from "./Order/Routes.js"
+import mongoose from "mongoose"
 const app = express()
 import { v2 as cloudinary } from 'cloudinary';
 import fileUpload from "express-fileupload"
@@ -28,7 +29,8 @@ app.use(cors({
 app.use(express.json({limit:"50mb"}))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
-connectDb()
+// Initialize database connection
+connectDb().catch(console.error);
 
 app.use(fileUpload())
 app.use("/api",MangoRoutes)
@@ -40,6 +42,32 @@ app.use("/api",OrderRoutes)
 app.get("/",(req,res)=>{
     res.send("server is running")
 })
+
+// Health check endpoint
+app.get("/health", async (req, res) => {
+    try {
+        // Check database connection
+        const dbState = mongoose.connection.readyState;
+        const dbStatus = {
+            0: "disconnected",
+            1: "connected", 
+            2: "connecting",
+            3: "disconnecting"
+        };
+        
+        res.json({
+            status: "ok",
+            database: dbStatus[dbState] || "unknown",
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
 
 
 app.listen(port,()=>{
